@@ -6,8 +6,6 @@ workflows:
     
     max_build_duration: 60
     
-    instance_type: linux
-    
     scripts:
     
       - name: Extrair e compilar o projeto Android
@@ -51,7 +49,6 @@ workflows:
       - source/**/android/app/build/outputs/apk/debug/app-debug.apk
       
       - source/**/android/app/build/outputs/apk/debug/*.apk
-
 
 
 
