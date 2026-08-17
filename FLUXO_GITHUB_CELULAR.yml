@@ -1,0 +1,65 @@
+name: Gerar APK Android pelo ZIP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    name: Compilar APK de teste
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: Extrair o código-fonte enviado pelo celular
+        run: |
+          test -f proxy-android.zip
+          mkdir -p source
+          unzip -q proxy-android.zip -d source
+          project_root="$(find source -maxdepth 3 -type f -name package.json -printf '%h\n' | head -n 1)"
+          test -n "$project_root"
+          test -f "$project_root/android/gradlew"
+          echo "PROJECT_ROOT=$project_root" >> "$GITHUB_ENV"
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Instalar pnpm
+        run: npm install --global pnpm@9.12.0
+
+      - name: Instalar dependências
+        run: |
+          cd "$PROJECT_ROOT"
+          pnpm install --frozen-lockfile
+
+      - name: Gerar APK debug
+        run: |
+          cd "$PROJECT_ROOT/android"
+          chmod +x gradlew
+          ./gradlew app:assembleDebug --no-daemon --stacktrace
+
+      - name: Preparar o arquivo para download
+        run: |
+          mkdir -p artifact
+          cp "$PROJECT_ROOT/android/app/build/outputs/apk/debug/app-debug.apk" artifact/Proxy-Android-debug.apk
+
+      - name: Disponibilizar APK para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Proxy-Android-debug-APK
+          path: artifact/Proxy-Android-debug.apk
+          if-no-files-found: error
+          retention-days: 7
