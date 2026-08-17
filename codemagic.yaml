@@ -28,7 +28,7 @@ workflows:
           
           cd "$project_root"
           
-          npm install --global pnpm@9.12.0
+          command -v pnpm >/dev/null 2>&1 || npm install --global pnpm@9.12.0
           
           pnpm install --frozen-lockfile
           
